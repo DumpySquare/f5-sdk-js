@@ -7,7 +7,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Mocha http_client tests",
+            "name": "Mocha All tests",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
                 "-r",
@@ -15,23 +15,7 @@
                 "--timeout",
                 "999999",
                 "--colors",
-                "${workspaceFolder}/tests/unit/http_client.tests.ts",
-            ],
-            "internalConsoleOptions": "neverOpen",
-            "protocol": "inspector",
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Mocha All",
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-            "args": [
-                "-r",
-                "ts-node/register",
-                "--timeout",
-                "999999",
-                "--colors",
-                "${workspaceFolder}/src/tests/**/*.test.ts",
+                "${workspaceFolder}/tests/**/*Tests.ts",
             ],
             "internalConsoleOptions": "neverOpen",
             "protocol": "inspector",

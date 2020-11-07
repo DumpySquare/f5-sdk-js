@@ -36,6 +36,37 @@ The timings will include the following:
     }
 ```
 
+### found an http-timer for axios
+
+https://github.com/szmarczak/http-timer
+
+Add the following timings object to the request/response of axios
+```json
+{
+  start: 1572712180361,
+  socket: 1572712180362,
+  lookup: 1572712180415,
+  connect: 1572712180571,
+  upload: 1572712180884,
+  response: 1572712181037,
+  end: 1572712181039,
+  error: undefined,
+  abort: undefined,
+  phases: {
+    wait: 1,
+    dns: 53,
+    tcp: 156,
+    request: 313,
+    firstByte: 153,
+    download: 2,
+    total: 678
+  }
+}
+```
+
+I like this implemtation, were we can just inject the timings at the core call
+https://github.com/axios/axios/issues/2853#issuecomment-705864491
+
 Using these timings we can log and provide stats about what devices (mainly f5) are responding slower than other or a gathered base line
 
 ### Planned features
@@ -46,9 +77,14 @@ Using these timings we can log and provide stats about what devices (mainly f5) 
   - Time when tls handshake was completed
   - Time when first byte was recieved
   - Time when last byte recieved and connection done
-- token timer
+  - seems that we will get betting more stats with the http-timer plugin
+- token timer/mgmt
   - Read token TTL and utilize for entire lifetime of token
   - refresh automatically as needed
+  - token mgmt should/will be transparent to the end user
+- Able to set HTTP call timeout
+  - This will come from a global variable
+- able to cancel current request
 - Service discovery for ATC
   - What services are installed
 - IPv6 support
@@ -59,7 +95,11 @@ Using these timings we can log and provide stats about what devices (mainly f5) 
 - Possible support for following redirects
 - Support for failed auth events
   - This is to allow the packege to be consumed by any other service, like a command line tool, but also be able to integrate into the vscode extension to clear password cache when authentication fails
+  - seems that we can stay with axios...
+    - mayb be able to pass a fucntion to the validateStatus param, which will allow tracking a 401-failed auth and call the appropriate clear-password function
+    - if this is the case, this might be something that could just be documented as a configuration item and not baked into this package
 - layered functions that do all the work of uploading/downloadin files and capturing ucs/qkviews
+  - Pretty sure most of this is done already
 - Expand ils rpm installs to monitor restjavad/restnoded processes to complete restart for job completion
 
 ---
