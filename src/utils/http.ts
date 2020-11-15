@@ -54,7 +54,7 @@ export async function makeRequest(host: string, uri: string, options?: {
 
     logger.debug(`Making HTTP request: ${host} ${uri} ${miscUtils.stringify(options)}`);
 
-    let httpResponse;
+    let httpResponse: HttpResponse;
 
     // wrapped in a try for debugging
     try {

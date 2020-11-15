@@ -12,6 +12,7 @@ Benefits:
 
 - [Usage](#usage)
 - [Ben-Work](#ben-work)
+- [Phase 2](#phase2)
 - [User Documentation](#user-documentation)
 
 
@@ -110,6 +111,33 @@ Using these timings we can log and provide stats about what devices (mainly f5) 
 - Support for failed auth events (probably not)
   - This is to allow the packege to be consumed by any other service, like a command line tool, but also be able to integrate into the vscode extension to clear password cache when authentication fails
   - Thinking more on this, it should probably be handled by whatever is utilizing the sdk
+
+---
+
+## Phasse 2
+
+Is to really take a step back and outline the different workflows we intent to support and architecte those functions accordingly
+
+I like the idea of having a main parent class that represends the core of connecting to the device.
+
+Information like:
+- device(ip/host)/port/username/password/provider
+
+Then discover information about the device
+- bigip/bigiq (even nginx?)
+- host info (platform, tmos version, license information)
+- installed ATC services
+- ATC service metadata (stuff from the CDN (or local cache), verion info, download links general endpoints)
+
+And provide basic manipulation:
+- upload/download files
+- generate/download ucs/qkviews
+- ATC RPM get/put and service install/uninstall
+- ATC service interaction
+  - help facilitate posting async AS3
+  - or DO
+  - or Deleting a single AS3 tenant from a bigiq target
+  - even just getting and posting simple ts  
 
 ---
 
