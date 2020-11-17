@@ -54,7 +54,13 @@ export async function makeRequest(host: string, uri: string, options?: {
 
     logger.debug(`Making HTTP request: ${host} ${uri} ${miscUtils.stringify(options)}`);
 
-    let httpResponse: HttpResponse;
+    let httpResponse;
+
+    //  have to keep adding the type definition for "transport" to axios when upgrading versions
+    //  it's allowed in the config, just missing in the types:
+    //  https://github.com/axios/axios/blob/master/lib/adapters/http.js#L163
+    //  https://github.com/axios/axios/issues/2853
+
 
     // wrapped in a try for debugging
     try {

@@ -89,6 +89,7 @@ Using these timings we can log and provide stats about what devices (mainly f5) 
 
 
 ### Further plans (mostly in priority...)
+- Update logger to accept mutiple parameters
 - layered functions that do all the work of uploading/downloadin files and capturing ucs/qkviews
 - Expand ils rpm installs to monitor restjavad/restnoded processes to complete restart for job completion
   - Currently only seems to make sure the install process completed, not that the services have restarted and are ready for processing again.
@@ -118,7 +119,9 @@ Using these timings we can log and provide stats about what devices (mainly f5) 
 
 Is to really take a step back and outline the different workflows we intent to support and architecte those functions accordingly
 
-I like the idea of having a main parent class that represends the core of connecting to the device.
+I like the idea of having a main parent class that represends the core of connecting to the device.  Programs can then manage multiple devices at once, with a mgmtClient for each device
+
+> nginx is gonna need to be included at some point.  It probably makes sense to make a nginx mgmt class with its respective details and connectivity
 
 Information like:
 - device(ip/host)/port/username/password/provider
@@ -138,6 +141,19 @@ And provide basic manipulation:
   - or DO
   - or Deleting a single AS3 tenant from a bigiq target
   - even just getting and posting simple ts  
+
+
+With this approach it seems that we can adjust the manement class to create/modify functions depending on certain situations.  Mainly the differences when working with a bigiq and bigiq.  We can creat a main deviceMgmt class instantiate it with credentials, then run a `load` or `discover` function to test connectivity, credentials and gather necessary information about the device.  With this information we could over write some of the functions or parameters to handle the differences in functionality.  Mainly, file upload/download, AS3 interactions, ... I wonder if we have the same issue with DO/TS, where bigiq can manage those services with the "target" paramters...
+
+
+https://stackoverflow.com/questions/21243790/is-it-possible-to-redefine-a-javascript-classs-method
+
+So, the question is, overwrite with prototypes or look at class inheritance?
+
+https://stackoverflow.com/questions/6885404/javascript-override-methods
+https://medium.com/javascript-scene/master-the-javascript-interview-what-s-the-difference-between-class-prototypal-inheritance-e4cd0a7562e9
+
+I see a way to have the parent mgmtClient class, then add on additional classes within to provide the different bolt on funtionality
 
 ---
 
