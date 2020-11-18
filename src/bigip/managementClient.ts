@@ -13,6 +13,12 @@
 import * as httpUtils from '../utils/http';
 import { HttpResponse, Token } from '../models'
 import { Method } from 'axios';
+import { As3Client } from '../bigip/as3Client';
+import { DoClient } from './doClient';
+import { TsClient } from '../bigip/tsClient';
+import { discoverBigip } from '../bigip/discover';
+
+// import { getF5Token, makeF5Request } from '../utils/f5Https'
 
 
 
@@ -48,6 +54,16 @@ export class ManagementClient {
     protected _token: Token;
     protected _tokenTimeout: number;
     protected _tokenIntervalId: NodeJS.Timeout;
+    // discover2: unknown;
+    // services: {
+    //     as3?: string;
+    //     do?: string;
+    //     ts?: string
+    // };
+    // atcMetaData: object = localAtcMetadata;
+    // as3: As3Client;
+    // do: DoClient;
+    // ts: TsClient;
 
     /**
      * @param options function options
@@ -65,9 +81,11 @@ export class ManagementClient {
         this._user = user;
         this._password = password;
         this.port = options?.port || 443;
-        this._provider = options?.provider || 'local';
+        this._provider = options?.provider || 'tmos';
+        // this.as3 = new As3Client();
+        // this.do = new DoClient();
+        // this.ts = new TsClient();
     }
-
 
 
 
@@ -105,6 +123,8 @@ export class ManagementClient {
                 }
             }
         );
+
+        // const resp = await getF5Token(this.host, this.port, this._user, this._password, this._provider);
 
         // capture entire token
         this._token = resp.data['token'];
@@ -154,7 +174,7 @@ export class ManagementClient {
         contentType?: string;
         advancedReturn?: boolean;
     }): Promise<HttpResponse> {
-        options = options || {};
+        // options = options || {};
 
         // if auth token has expired, it should have been cleared, get new one
         if(!this._token){
@@ -179,109 +199,11 @@ export class ManagementClient {
         );
     }
 
-    /**
-     * discover information about device
-     *  - bigip/bigiq/nginx
-     *  - tmos/nginx version
-     *  - installed atc services and versions
-     *  
-     */
-    async discover() {
-        // try tmos info endpoint
-        // try fast info endpoint
-        // try as3 info endpoint
-        // try do info endpoint
-        // try ts info endpoint
-        // try cf info endpoint
 
-        // return object of discovered services
-    }
-    
-    /**
-     * upload file to f5
-     *  - used for ucs/ilx-rpms/.conf-merges
-     * @param localSourcePathFilename 
-     */
-    async uploadFile (localSourcePathFilename: string) { 
-
-        return {
-            destFilePath: '/path/file.x',
-            sizeBytes: '74523'
-        }
-    }
     
 
-    /**
-     * download file from f5 (ucs/qkview/...)
-     *  - there are only a couple of directories accessible via api
-     *      need to document them and pick a default so the other functions
-     *      can put thier output files in the same place
-     * @param localDestPathFile 
-     */
-    async downloadFile (localDestPath: string) {
-
-        return;
-    }
-    
-    /**
-     * generate and download ucs file
-     *  - should include all parameters for creating ucs
-     * @param localDestPathFile 
-     * @param options.passPhrase to encrypt ucs with
-     * @param options.noPrivateKey exclude SSL private keys from regular ucs
-     * @param options.mini create mini_ucs for corkscrew
-     */
-    async getUCS (
-        localDestPathFile: string, 
-        options?: { 
-            passPhrase?: string;
-            noPrivateKey?: boolean;
-            mini?: boolean; 
-        }): Promise<object> {
-
-            // K13132: Backing up and restoring BIG-IP configuration files with a UCS archive
-            // https://support.f5.com/csp/article/K13132
-            // tmsh save sys ucs $(echo $HOSTNAME | cut -d'.' -f1)-$(date +%H%M-%m%d%y)
-
-        return {
-            localDestPathFileName: '/path/file.ucs',
-            sizeBytes: '1234'
-        };
-    };
-
-    /**
-     * generate and download qkview
-     *  - should include all parameters for creating a qkview
-     *  - should probably default to silent with lowest priority
-     * @param localDestPathFile 
-     * @param options 
-     */
-    async getQkview(
-        localDestPathFile: string, 
-        options?: {
-            excludeCoreFiles: boolean;
-        }): Promise<unknown> {
-
-        return {
-            localDestPathFileName: '/path/file.qkview',
-            sizeBytes2: '4567'
-        };
-    }
-
-    /**
-     * install specified ilx-rpm
-     *  - need to discuss workflow
-     *  - should this just install an rpm already uploaded?
-     *  - or should this also fetch/upload the requested rpm?
-     */
-    async installRPM(rpmName: string) {
-        
-        return;
-    }
 
 
-    async getMetaData () {
 
-        return;
-    }
+
 }

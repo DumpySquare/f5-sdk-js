@@ -13,6 +13,8 @@
 import assert from 'assert';
 import nock from 'nock';
 import { ManagementClient } from '../../src/bigip';
+import { F5Client } from '../../src/bigip/f5Client';
+import { as3InfoApiReponse, deviceInfo, fastInfoApiResponse } from '../artifacts/f5_device_atc_infos';
 
 import { getManagementClientIpv6, ipv6Host } from './bigip/fixtureUtils';
 // import { requestNew } from '../../src/utils/http_new'
@@ -59,7 +61,7 @@ describe('http client tests - ipv6', function () {
             .get('/foo')
             .reply(200, { foo: 'bar' });
 
-        // create a custom mgmtClient so we can inject port/provider
+        // create a custom mgmtClient so we can inject/test port/provider
         mgmtClient = new ManagementClient(
             ipv6Host,
             'admin',
@@ -73,5 +75,37 @@ describe('http client tests - ipv6', function () {
         const response = await mgmtClient.makeRequest('/foo');
         assert.deepStrictEqual(response.data, { foo: 'bar' })
         await mgmtClient.clearToken();
+    });
+
+
+    it('extending ipv6 - discovery', async function () {
+        nock(`https://${ipv6Host}:8443`)
+            .post('/mgmt/shared/authn/login')
+            .reply(200, getFakeToken())
+            .get('/foo')
+            .reply(200, { foo: 'bar' })
+            .get('/mgmt/shared/identified-devices/config/device-info')
+            .reply(200, deviceInfo)
+            .get('/mgmt/shared/fast/info')
+            .reply(200, fastInfoApiResponse)
+            .get('/mgmt/shared/appsvcs/info')
+            .reply(200, as3InfoApiReponse);
+
+        // create a custom mgmtClient so we can inject/test port/provider
+        const dClient = new F5Client(
+            ipv6Host,
+            'admin',
+            'admin',
+            {
+                port: 8443,
+                provider: 'tmos'
+            }
+        )
+
+        // const x = await mgmtClient.discover();
+        const resp = await dClient.https('/foo');
+        const disc = await dClient.discover();
+        assert.deepStrictEqual(resp.data, { foo: 'bar' })
+        // await mgmtClient.clearToken();
     });
 });
