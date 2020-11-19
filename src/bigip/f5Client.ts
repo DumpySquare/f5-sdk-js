@@ -10,17 +10,28 @@
 'use strict';
 
 import { Method } from "axios";
-import { HttpResponse } from "../models";
-import { discoverBigip } from "./discover";
+import { HttpResponse, AtcMetaData, AtcInfo } from "../models";
+// import { discoverBigip } from "./discover";
 import { MetadataClient } from "./extension/metadata";
 import { ManagementClient } from "./managementClient";
 
 import localAtcMetadata from './atc_metadata.json';
+import { FastClient } from "./fastClient";
+import { As3Client } from "./as3Client";
+import { DoClient } from "./doClient";
+import { TsClient } from "./tsClient";
+import { CfClient } from "./cfClient";
 
 export class F5Client {
     protected _mgmtClient: ManagementClient;
     protected _metadataClient: MetadataClient;
-    protected _atcMetaData = localAtcMetadata;
+    protected _atcMetaData: AtcMetaData = localAtcMetadata;
+    host: any;
+    fast: FastClient | undefined;
+    as3: As3Client | undefined;
+    do: DoClient | undefined;
+    ts: TsClient | undefined;
+    cf: CfClient | undefined;
 
     constructor(
         host: string,
@@ -49,20 +60,29 @@ export class F5Client {
      * 
      * @returns request response
      */
-    async https (uri: string, options?: {
+    async https(uri: string, options?: {
         method?: Method;
         headers?: object;
         data?: object;
         contentType?: string;
         advancedReturn?: boolean;
-    }): Promise<HttpResponse> { 
+    }): Promise<HttpResponse> {
         return await this._mgmtClient.makeRequest(uri, options ? options : undefined)
     }
 
 
     /**
+     * clear auth token
+     *  - mainly for unit tests...
+     */
+    async clearLogin() {
+        return this._mgmtClient.clearToken();
+    }
+
+
+    /**
      * discover information about device
-     *  - bigip/bigiq/nginx
+     *  - bigip/bigiq/nginx?
      *  - tmos/nginx version
      *  - installed atc services and versions
      *  
@@ -75,9 +95,52 @@ export class F5Client {
         // try ts info endpoint
         // try cf info endpoint
 
-        const x = await discoverBigip(this._atcMetaData, this._mgmtClient)
+        await this._mgmtClient.makeRequest('/mgmt/shared/identified-devices/config/device-info')
+            .then(resp => this.host = resp.data)
 
-        return x;
+        // check FAST installed by getting verion info
+        await this._mgmtClient.makeRequest(this._atcMetaData.components.fast.endpoints.info.uri)
+            .then(resp => {
+                // todo: build fast client class instantiate here
+                this.fast = new FastClient(resp.data as AtcInfo, this._atcMetaData.components.fast, this._mgmtClient);
+            })
+
+
+        // check AS3 installed by getting verion info
+        await this._mgmtClient.makeRequest(this._atcMetaData.components.as3.endpoints.info.uri)
+            .then(resp => {
+                // if http 2xx, create as3 client
+                // notice the recast of resp.data type of "unknown" to "AtcInfo"
+                this.as3 = new As3Client(resp.data as AtcInfo, this._atcMetaData.components.as3, this._mgmtClient);
+            })
+            .catch(err => console.log(err));
+
+
+        // check DO installed by getting verion info
+        await this._mgmtClient.makeRequest(this._atcMetaData.components.do.endpoints.info.uri)
+            .then(resp => {
+                this.do = new DoClient(resp.data[0] as AtcInfo, this._atcMetaData.components.do, this._mgmtClient);
+            })
+            .catch(err => console.log(err));
+
+
+        // check TS installed by getting verion info
+        await this._mgmtClient.makeRequest(this._atcMetaData.components.ts.endpoints.info.uri)
+            .then(resp => {
+                this.ts = new TsClient(resp.data as AtcInfo, this._atcMetaData.components.ts, this._mgmtClient);
+            })
+            .catch(err => console.log(err));
+
+
+        // check CF installed by getting verion info
+        await this._mgmtClient.makeRequest(this._atcMetaData.components.cf.endpoints.info.uri)
+            .then(resp => {
+                this.cf = new CfClient(resp.data as AtcInfo, this._atcMetaData.components.cf, this._mgmtClient);
+            })
+            .catch(err => console.log(err));
+
+
+        return;
         // return object of discovered services
     }
 
@@ -87,14 +150,14 @@ export class F5Client {
      *  - used for ucs/ilx-rpms/.conf-merges
      * @param localSourcePathFilename 
      */
-    async uploadFile (localSourcePathFilename: string) { 
+    async uploadFile(localSourcePathFilename: string) {
 
         return {
             destFilePath: '/path/file.x',
             sizeBytes: '74523'
         }
     }
-    
+
 
     /**
      * download file from f5 (ucs/qkview/...)
@@ -103,11 +166,11 @@ export class F5Client {
      *      can put thier output files in the same place
      * @param localDestPathFile 
      */
-    async downloadFile (localDestPath: string) {
-
+    async downloadFile(fileName: string, localDestPath: string) {
+        const x = this._mgmtClient.downloadFile(fileName, localDestPath)
         return;
     }
-    
+
 
 
     /**
@@ -118,17 +181,17 @@ export class F5Client {
      * @param options.noPrivateKey exclude SSL private keys from regular ucs
      * @param options.mini create mini_ucs for corkscrew
      */
-    async getUCS (
-        localDestPathFile: string, 
-        options?: { 
+    async getUCS(
+        localDestPathFile: string,
+        options?: {
             passPhrase?: string;
             noPrivateKey?: boolean;
-            mini?: boolean; 
+            mini?: boolean;
         }): Promise<object> {
 
-            // K13132: Backing up and restoring BIG-IP configuration files with a UCS archive
-            // https://support.f5.com/csp/article/K13132
-            // tmsh save sys ucs $(echo $HOSTNAME | cut -d'.' -f1)-$(date +%H%M-%m%d%y)
+        // K13132: Backing up and restoring BIG-IP configuration files with a UCS archive
+        // https://support.f5.com/csp/article/K13132
+        // tmsh save sys ucs $(echo $HOSTNAME | cut -d'.' -f1)-$(date +%H%M-%m%d%y)
 
         return {
             localDestPathFileName: '/path/file.ucs',
@@ -147,7 +210,7 @@ export class F5Client {
      * @param options 
      */
     async getQkview(
-        localDestPathFile: string, 
+        localDestPathFile: string,
         options?: {
             excludeCoreFiles: boolean;
         }): Promise<unknown> {
@@ -168,13 +231,18 @@ export class F5Client {
      *  - or should this also fetch/upload the requested rpm?
      */
     async installRPM(rpmName: string) {
-        
+
         return;
     }
 
 
 
-    async getMetaData () {
+    /**
+     * refresh/get latest ATC metadata from 
+     * https://cdn.f5.com/product/cloudsolutions/f5-extension-metadata/latest/metadata.json
+     * todo: refresh this file with every packages release via git actions or package.json script
+     */
+    async refreshMetaData() {
 
         return;
     }

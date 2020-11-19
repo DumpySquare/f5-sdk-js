@@ -10,8 +10,8 @@
 
 import * as fs from 'fs';
 import https from 'https';
-import axios, { Method } from 'axios';
-import timer from '../../node_modules/@szmarczak/http-timer/dist/source';
+import axios, { Method, AxiosResponse } from 'axios';
+import timer, { IncomingMessageWithTimings } from '../../node_modules/@szmarczak/http-timer/dist/source';
 import Logger from '../logger';
 import * as miscUtils from './misc';
 import assert from 'assert';
@@ -26,7 +26,7 @@ const logger = Logger.getLogger();
  * transport:request: httpsWithTimer
  */
 const transport = {
-    request: function httpsWithTimer(...args: unknown[]): ClientRequest  {
+    request: function httpsWithTimer(...args: unknown[]): ClientRequest {
         const request = https.request.apply(null, args)
         timer(request);
         return request;
@@ -54,7 +54,7 @@ export async function makeRequest(host: string, uri: string, options?: {
 
     logger.debug(`Making HTTP request: ${host} ${uri} ${miscUtils.stringify(options)}`);
 
-    let httpResponse;
+    let httpResponse: HttpResponse;
 
     //  have to keep adding the type definition for "transport" to axios when upgrading versions
     //  it's allowed in the config, just missing in the types:
@@ -127,40 +127,46 @@ export async function makeRequest(host: string, uri: string, options?: {
  *
  * @returns void
  */
-export async function downloadToFile(url: string, file: string): Promise<HttpResponse> {
+export async function downloadToFile(url: string, file: string, options?: { headers?: object }): Promise<HttpResponse> {
+
+    const writable = fs.createWriteStream(file)
+
     return new Promise(((resolve, reject) => {
         axios({
             httpsAgent: new https.Agent({
                 rejectUnauthorized: false
             }),
-            method: 'GET',
+            headers: options?.headers ? options?.headers : {},
             url,
             transport,
             responseType: 'stream'
         })
-        .then(function (response) {
-            response.data.pipe(fs.createWriteStream(file))
-                .on('finish', () => {
-                    return resolve({
-                        data: response.data,
-                        headers: response.headers,
-                        status: response.status,
-                        statusText: response.statusText,
-                        request: {
-                            url: response.config.url,
-                            method: response.request.method,
-                            headers: response.request.headers,
-                            protocol: response.config.httpsAgent.protocol,
-                            timings: response.request.timings
-                        }
-                    })
-                });
-        })
-        .catch( err => {
-            // look at adding more failure details, like,
-            // was it tcp, dns, dest url problem, write file problem, ...
-            return reject(err)
-        })
+            .then(function (response) {
+                response.data.pipe(writable)
+                    .on('finish', () => {
+                        return resolve({
+                            data: {
+                                path: writable.path,
+                                bytes: writable.bytesWritten
+                            },
+                            headers: response.headers,
+                            status: response.status,
+                            statusText: response.statusText,
+                            request: {
+                                url: response.config.url,
+                                method: response.request.method,
+                                headers: response.request.headers,
+                                protocol: response.config.httpsAgent.protocol,
+                                timings: response.request.timings
+                            }
+                        })
+                    });
+            })
+            .catch(err => {
+                // look at adding more failure details, like,
+                // was it tcp, dns, dest url problem, write file problem, ...
+                return reject(err)
+            })
     }));
 }
 

@@ -13,10 +13,12 @@
 import * as httpUtils from '../utils/http';
 import { HttpResponse, Token } from '../models'
 import { Method } from 'axios';
-import { As3Client } from '../bigip/as3Client';
-import { DoClient } from './doClient';
-import { TsClient } from '../bigip/tsClient';
-import { discoverBigip } from '../bigip/discover';
+// import { IncomingMessageWithTimings } from '@szmarczak/http-timer/dist/source';
+import * as fs from 'fs';
+// import { As3Client } from '../bigip/as3Client';
+// import { DoClient } from './doClient';
+// import { TsClient } from '../bigip/tsClient';
+// import { discoverBigip } from '../bigip/discover';
 
 // import { getF5Token, makeF5Request } from '../utils/f5Https'
 
@@ -54,16 +56,7 @@ export class ManagementClient {
     protected _token: Token;
     protected _tokenTimeout: number;
     protected _tokenIntervalId: NodeJS.Timeout;
-    // discover2: unknown;
-    // services: {
-    //     as3?: string;
-    //     do?: string;
-    //     ts?: string
-    // };
-    // atcMetaData: object = localAtcMetadata;
-    // as3: As3Client;
-    // do: DoClient;
-    // ts: TsClient;
+
 
     /**
      * @param options function options
@@ -82,12 +75,7 @@ export class ManagementClient {
         this._password = password;
         this.port = options?.port || 443;
         this._provider = options?.provider || 'tmos';
-        // this.as3 = new As3Client();
-        // this.do = new DoClient();
-        // this.ts = new TsClient();
     }
-
-
 
 
     /**
@@ -99,8 +87,7 @@ export class ManagementClient {
         return this._token = undefined;
     }
 
-
-    
+   
 
 
     /**
@@ -123,8 +110,6 @@ export class ManagementClient {
                 }
             }
         );
-
-        // const resp = await getF5Token(this.host, this.port, this._user, this._password, this._provider);
 
         // capture entire token
         this._token = resp.data['token'];
@@ -172,6 +157,7 @@ export class ManagementClient {
         headers?: object;
         data?: object;
         contentType?: string;
+        responseType?: string;
         advancedReturn?: boolean;
     }): Promise<HttpResponse> {
         // options = options || {};
@@ -200,10 +186,30 @@ export class ManagementClient {
     }
 
 
-    
+    /**
+     * download file from f5 (ucs/qkview/...)
+     *  - there are only a couple of directories accessible via api
+     *      need to document them and pick a default so the other functions
+     *      can put thier output files in the same place
+     * https://devcentral.f5.com/s/articles/demystifying-icontrol-rest-part-5-transferring-files
+     * 
+     * @param fileName file name on bigip
+     * @param localDestPathFile where to put the file (including file name)
+     */
+    async downloadFile(fileName: string, localDestPath: string) {
 
+        // if auth token has expired, it should have been cleared, get new one
+        if(!this._token){
+            await this.getToken();
+        }
 
-
-
-
+        return await httpUtils.downloadToFile(
+            `https://${this.host}:${this.port}/mgmt/cm/autodeploy/software-image-downloads/${fileName}`,
+            localDestPath, {
+                headers:  {
+                    'X-F5-Auth-Token': this._token
+                },
+            }
+            )
+    }
 }

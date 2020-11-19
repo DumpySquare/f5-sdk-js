@@ -9,13 +9,23 @@
 
 'use strict';
 
-
+import { As3MetaData, AtcInfo } from "../models";
+import { ManagementClient } from "./managementClient";
 
 
 export class DoClient {
-
-    constructor () {
-
+    protected _mgmtClient: ManagementClient;
+    protected _metaData: As3MetaData;
+    protected _version: AtcInfo;
+    
+    constructor (
+        versions: AtcInfo,
+        metaData: As3MetaData,
+        mgmtClient: ManagementClient
+    ) {
+        this._version = versions;
+        this._metaData = metaData;
+        this._mgmtClient = mgmtClient;
     }
 
 

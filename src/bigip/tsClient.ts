@@ -9,15 +9,23 @@
 
 'use strict';
 
-
-
+import { TsMetaData, AtcInfo } from "../models";
+import { ManagementClient } from "./managementClient";
 
 export class TsClient {
-
-    constructor () {
-
+    protected _mgmtClient: ManagementClient;
+    protected _metaData: TsMetaData;
+    protected _version: AtcInfo;
+    
+    constructor (
+        versions: AtcInfo,
+        metaData: TsMetaData,
+        mgmtClient: ManagementClient
+    ) {
+        this._version = versions;
+        this._metaData = metaData;
+        this._mgmtClient = mgmtClient;
     }
-
 
     async get () {
         return 'ts-get';

@@ -1,3 +1,9 @@
+
+
+
+/**
+ * f5 host info api @ '/mgmt/shared/identified-devices/config/device-info'
+ */
 export const deviceInfo = {
     "baseMac": "00:50:00:ff:F4:CB",
     "hostMac": "00:50:00:ff:F4:CB",
@@ -52,6 +58,10 @@ export const deviceInfo = {
     "selfLink": "https://localhost/mgmt/shared/identified-devices/config/device-info"
 }
 
+
+/**
+ * fast info api @ '/mgmt/shared/fast/info'
+ */
 export const fastInfoApiResponse = {
     "version": "1.4.0",
     "as3Info": {
@@ -130,6 +140,10 @@ export const fastInfoApiResponse = {
     ]
 };
 
+
+/**
+ * as3 info api @ '/mgmt/shared/appsvcs/info'
+ */
 export const as3InfoApiReponse = {
     "version": "3.22.0",
     "release": "2",
@@ -137,6 +151,12 @@ export const as3InfoApiReponse = {
     "schemaMinimum": "3.0.0"
 };
 
+
+
+
+/**
+ * do info api @ '/mgmt/shared/declarative-onboarding/info'
+ */
 export const doInfoApiReponse = [
     {
         "id": 0,
@@ -155,6 +175,9 @@ export const doInfoApiReponse = [
     }
 ];
 
+/**
+ * ts info api @ '/mgmt/shared/telemetry/info'
+ */
 export const tsInfoApiReponse = {
     "nodeVersion": "v8.11.1",
     "version": "1.14.0",
@@ -163,3 +186,9 @@ export const tsInfoApiReponse = {
     "schemaMinimum": "0.9.0"
 };
 
+/**
+ * cf info api @ '/mgmt/shared/cloud-failover/declare'
+ */
+export const cfInfoApiReponse = {
+    
+}
