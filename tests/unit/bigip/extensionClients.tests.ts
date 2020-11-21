@@ -15,6 +15,7 @@ import { getManagementClient, defaultHost, getFakeToken } from './fixtureUtils';
 
 import { ManagementClient } from '../../../src/bigip';
 import { AS3Client, DOClient, TSClient, CFClient } from '../../../src/bigip/extension';
+import { AuthTokenReqBody } from '../../../src/models';
 
 const FIXED_INFO = {
     'as3': {
@@ -106,7 +107,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
             it(`should validate package is installed`, async function() {
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .post('/mgmt/shared/iapp/package-management-tasks')
                     .reply(200, { id: '1234' })
                     .get('/mgmt/shared/iapp/package-management-tasks/1234')
@@ -131,7 +134,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
             it(`should validate package is not installed`, async function() {
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .post('/mgmt/shared/iapp/package-management-tasks')
                     .reply(200, { id: '1234' })
                     .get('/mgmt/shared/iapp/package-management-tasks/1234')
@@ -159,7 +164,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
                     .reply(200, 'raw');
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .post(uri => uri.includes('/mgmt/shared/file-transfer/uploads/'))
                     .reply(200, { id: '1234' })
                     .post('/mgmt/shared/iapp/package-management-tasks')
@@ -178,7 +185,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
                     .reply(200, 'raw');
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .post(uri => uri.includes('/mgmt/shared/file-transfer/uploads/'))
                     .reply(200, { id: '1234' })
                     .post('/mgmt/shared/iapp/package-management-tasks')
@@ -199,7 +208,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
                     .reply(200, 'raw');
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .post(uri => uri.includes('/mgmt/shared/file-transfer/uploads/'))
                     .reply(200, { id: '1234' })
                     .post('/mgmt/shared/iapp/package-management-tasks')
@@ -217,7 +228,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
             it(`should uninstall package`, async function() {
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .post('/mgmt/shared/iapp/package-management-tasks')
                     .reply(200, { id: '1234' })
                     .get('/mgmt/shared/iapp/package-management-tasks/1234')
@@ -245,7 +258,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
             it(`should uninstall package (when package is not installed)`, async function() {
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .post('/mgmt/shared/iapp/package-management-tasks')
                     .reply(200, { id: '1234' })
                     .get('/mgmt/shared/iapp/package-management-tasks/1234')
@@ -276,7 +291,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
             it(`should validate service is available`, async function() {
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .get(FIXED_INFO[component]['endpoints']['primary'])
                     .reply(200, {});
 
@@ -288,7 +305,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
             it(`should validate service is not available`, async function() {
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .get(FIXED_INFO[component]['endpoints']['primary'])
                     .reply(500, {});
 
@@ -300,7 +319,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
             it(`should show service info`, async function() {
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .get(FIXED_INFO[component]['endpoints']['info'])
                     .reply(200, {});
 
@@ -312,7 +333,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
             it(`should perform create operation`, async function() {
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .post(FIXED_INFO[component]['endpoints']['primary'])
                     .reply(200, {});
 
@@ -324,7 +347,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
             it(`should perform create operation (async task response)`, async function() {
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .post(FIXED_INFO[component]['endpoints']['primary'])
                     .reply(202, { selfLink: 'https://localhost/task/1234'})
                     .get('/task/1234')
@@ -340,7 +365,9 @@ function getExtensionClient(component: string, mgmtClient: ManagementClient): an
             it(`should perform show operation`, async function() {
                 nock(`https://${defaultHost}`)
                     .post('/mgmt/shared/authn/login')
-                    .reply(200, getFakeToken())
+                    .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                        return getFakeToken(reqBody.username, reqBody.loginProviderName);
+                    })
                     .get(FIXED_INFO[component]['endpoints']['primary'])
                     .reply(200, {});
 
@@ -360,7 +387,9 @@ describe('BIG-IP extension client specific tests: as3', function() {
     beforeEach(async function() {
         nock(`https://${defaultHost}`)
             .post('/mgmt/shared/authn/login')
-            .reply(200, getFakeToken());
+            .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                return getFakeToken(reqBody.username, reqBody.loginProviderName);
+            })
 
         
         mgmtClient = getManagementClient();

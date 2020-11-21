@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+/* eslint-disable @typescript-eslint/ban-types */
 /*
  * Copyright 2020. F5 Networks, Inc. See End User License Agreement ("EULA") for
  * license terms. Notwithstanding anything to the contrary in the EULA, Licensee
@@ -10,14 +13,16 @@
 
 import * as fs from 'fs';
 import https from 'https';
-import axios, { Method, AxiosResponse } from 'axios';
-import timer, { IncomingMessageWithTimings } from '../../node_modules/@szmarczak/http-timer/dist/source';
+import axios, { Method, AxiosResponse, AxiosBasicCredentials } from 'axios';
+import timer, { IncomingMessageWithTimings } from '@szmarczak/http-timer/dist/source';
 import Logger from '../logger';
 import * as miscUtils from './misc';
 import assert from 'assert';
 
 import { HttpResponse } from '../models'
 import { ClientRequest } from 'http';
+import { allowedNodeEnvironmentFlags } from 'process';
+import path from 'path';
 
 const logger = Logger.getLogger();
 
@@ -45,9 +50,9 @@ const transport = {
 export async function makeRequest(host: string, uri: string, options?: {
     method?: Method;
     port?: number | 443;
-    data?: object;
-    headers?: object;
-    basicAuth?: object;
+    data?: unknown;
+    headers?: unknown;
+    basicAuth?: AxiosBasicCredentials;
     advancedReturn?: boolean;
 }): Promise<HttpResponse> {
     // options = options || {};
@@ -168,6 +173,79 @@ export async function downloadToFile(url: string, file: string, options?: { head
                 return reject(err)
             })
     }));
+}
+
+
+
+
+
+/**
+ * upload file to f5
+ *  - POST	/mgmt/shared/file-transfer/uploads/{file}
+ *  - path on f5 -> /var/config/rest/downloads
+ *
+ * @param file local file location to upload
+ * @param host
+ * @param port
+ * @param token
+ *
+ * @returns void
+ */
+export async function uploadFile(file: string, host: string, port: number, token: string) {
+
+    let response;
+    const fileName = path.parse(file).base;
+
+    const fileStats = fs.statSync(file);
+    const chunkSize = 1024 * 1024;
+    let start = 0;
+    let end = Math.min(chunkSize, fileStats.size-1);
+    while (end <= fileStats.size - 1 && start < end) {
+               
+        response = await makeRequest(
+            host,
+            `/mgmt/shared/file-transfer/uploads/${fileName}`,
+            {
+                port,
+                method: 'POST',
+                headers: {
+                    'X-F5-Auth-Token': token,
+                    'Content-Type': 'application/octet-stream',
+                    'Content-Range': `${start}-${end}/${fileStats.size}`,
+                    'Content-Length': end - start + 1
+                },
+                data: fs.createReadStream(file, { start, end }),
+                // contentType: 'raw'
+            }
+        );
+
+        start += chunkSize;
+        if (end + chunkSize < fileStats.size - 1) { // more to go
+            end += chunkSize;
+        } else if (end + chunkSize > fileStats.size - 1) { // last chunk
+            end = fileStats.size - 1;
+        } else { // done - could use do..while loop instead of this
+            end = fileStats.size;
+        }
+    }
+
+    return {
+        data: {
+            fileName,
+            bytes: fileStats.size
+        },
+        headers: response.headers,
+        status: response.status,
+        statusText: response.statusText,
+        request: {
+            url: response.request.url,
+            method: response.request.method,
+            headers: response.request.headers,
+            protocol: response.request.protocol,
+            timings: response.request.timings
+        }
+    }
+
 }
 
 

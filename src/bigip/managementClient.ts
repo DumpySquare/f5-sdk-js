@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /*
@@ -10,17 +11,10 @@
 
 'use strict';
 
-import * as httpUtils from '../utils/http';
+import * as f5Https from '../utils/f5Http';
 import { HttpResponse, Token } from '../models'
 import { Method } from 'axios';
-// import { IncomingMessageWithTimings } from '@szmarczak/http-timer/dist/source';
-import * as fs from 'fs';
-// import { As3Client } from '../bigip/as3Client';
-// import { DoClient } from './doClient';
-// import { TsClient } from '../bigip/tsClient';
-// import { discoverBigip } from '../bigip/discover';
 
-// import { getF5Token, makeF5Request } from '../utils/f5Https'
 
 
 
@@ -97,7 +91,7 @@ export class ManagementClient {
 
         // logger.debug('getting auth token from: ', `${this.host}:${this.port}`);
 
-        const resp = await httpUtils.makeRequest(
+        const resp = await f5Https.makeRequest(
             this.host,
             '/mgmt/shared/authn/login',
             {
@@ -170,7 +164,7 @@ export class ManagementClient {
         // todo: add logic to watch for failed/broken tokens, clear token when needed
         // be able to clear the token if it expires before timer
 
-        return await httpUtils.makeRequest(
+        return await f5Https.makeRequest(
             this.host,
             uri,
             {
@@ -196,14 +190,14 @@ export class ManagementClient {
      * @param fileName file name on bigip
      * @param localDestPathFile where to put the file (including file name)
      */
-    async downloadFile(fileName: string, localDestPath: string) {
+    async download(fileName: string, localDestPath: string): Promise<HttpResponse> {
 
         // if auth token has expired, it should have been cleared, get new one
         if(!this._token){
             await this.getToken();
         }
 
-        return await httpUtils.downloadToFile(
+        return await f5Https.downloadToFile(
             `https://${this.host}:${this.port}/mgmt/cm/autodeploy/software-image-downloads/${fileName}`,
             localDestPath, {
                 headers:  {
@@ -211,5 +205,28 @@ export class ManagementClient {
                 },
             }
             )
+    }
+
+
+
+
+    /**
+     * upload file to f5
+     *  - POST	/mgmt/shared/file-transfer/uploads/{file}
+     *  - path on f5: /var/config/rest/downloads
+     * 
+     * https://devcentral.f5.com/s/articles/demystifying-icontrol-rest-part-5-transferring-files
+     * 
+     * @param fileName file name on bigip
+     * @param localDestPathFile where to put the file (including file name)
+     */
+    async upload(localSourcePathFilename: string): Promise<HttpResponse> {
+
+        // if auth token has expired, it should have been cleared, get new one
+        if(!this._token){
+            await this.getToken();
+        }
+
+        return await f5Https.uploadFile(localSourcePathFilename, this.host, this.port, this._token.token)
     }
 }

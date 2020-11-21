@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 /*
  * Copyright 2020. F5 Networks, Inc. See End User License Agreement ("EULA") for
  * license terms. Notwithstanding anything to the contrary in the EULA, Licensee
@@ -11,7 +12,7 @@
 import * as fs from 'fs';
 
 import * as constants from '../../constants';
-import * as httpUtils from '../../utils/http';
+import * as httpUtils from '../../utils/f5Http';
 import * as miscUtils from '../../utils/misc';
 
 import { ManagementClient } from '../index';
@@ -226,7 +227,7 @@ export class PackageClient {
     protected async _uploadRpm(file: string, options?: {
         deleteFile?: boolean;
     }): Promise<void> {
-        /* eslint-disable no-await-in-loop, no-loop-func */
+        // /* eslint-disable no-await-in-loop, no-loop-func */
         options = options || {};
         const deleteFile = options.deleteFile || true;
 

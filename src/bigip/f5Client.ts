@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/ban-types */
 
 /*
  * Copyright 2020. F5 Networks, Inc. See End User License Agreement ("EULA") for
@@ -26,7 +30,7 @@ export class F5Client {
     protected _mgmtClient: ManagementClient;
     protected _metadataClient: MetadataClient;
     protected _atcMetaData: AtcMetaData = localAtcMetadata;
-    host: any;
+    host: unknown;
     fast: FastClient | undefined;
     as3: As3Client | undefined;
     do: DoClient | undefined;
@@ -48,8 +52,6 @@ export class F5Client {
             password,
             options ? options : undefined
         )
-        // this._mgmtClient = mgmtClient;
-        // this._metadataClient = metadataClient;
     }
 
     /**
@@ -62,7 +64,7 @@ export class F5Client {
      */
     async https(uri: string, options?: {
         method?: Method;
-        headers?: object;
+        headers?: any;
         data?: object;
         contentType?: string;
         advancedReturn?: boolean;
@@ -75,7 +77,7 @@ export class F5Client {
      * clear auth token
      *  - mainly for unit tests...
      */
-    async clearLogin() {
+    async clearLogin(): Promise<void> {
         return this._mgmtClient.clearToken();
     }
 
@@ -87,7 +89,7 @@ export class F5Client {
      *  - installed atc services and versions
      *  
      */
-    async discover() {
+    async discover(): Promise<void> {
         // try tmos info endpoint
         // try fast info endpoint
         // try as3 info endpoint
@@ -150,12 +152,10 @@ export class F5Client {
      *  - used for ucs/ilx-rpms/.conf-merges
      * @param localSourcePathFilename 
      */
-    async uploadFile(localSourcePathFilename: string) {
+    async upload(localSourcePathFilename: string) {
 
-        return {
-            destFilePath: '/path/file.x',
-            sizeBytes: '74523'
-        }
+        return this._mgmtClient.upload(localSourcePathFilename)
+
     }
 
 
@@ -166,9 +166,8 @@ export class F5Client {
      *      can put thier output files in the same place
      * @param localDestPathFile 
      */
-    async downloadFile(fileName: string, localDestPath: string) {
-        const x = this._mgmtClient.downloadFile(fileName, localDestPath)
-        return;
+    async download(fileName: string, localDestPath: string) {
+        return this._mgmtClient.download(fileName, localDestPath)
     }
 
 
@@ -197,7 +196,7 @@ export class F5Client {
             localDestPathFileName: '/path/file.ucs',
             sizeBytes: '1234'
         };
-    };
+    }
 
 
 

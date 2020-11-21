@@ -12,7 +12,6 @@
 
 import assert from 'assert';
 import nock from 'nock';
-import { ManagementClient } from '../../src/bigip';
 import { F5Client } from '../../src/bigip/f5Client';
 import { 
     as3InfoApiReponse, 
@@ -21,11 +20,15 @@ import {
     fastInfoApiResponse 
 } from '../artifacts/f5_device_atc_infos';
 
-import { getManagementClientIpv6, ipv6Host } from './bigip/fixtureUtils';
+import { 
+    getF5Client,
+    ipv6Host 
+} from './bigip/fixtureUtils';
 // import { requestNew } from '../../src/utils/http_new'
 // import { makeRequest } from '../../src/utils/http';
 import { getFakeToken } from './bigip/fixtureUtils';
 import localAtcMetadata from '../../src/bigip/atc_metadata.json';
+import { AuthTokenReqBody } from '../../src/models';
 
 
 
@@ -33,61 +36,66 @@ import localAtcMetadata from '../../src/bigip/atc_metadata.json';
 
 
 describe('http client tests - ipv6', function () {
-    let mgmtClient: ManagementClient;
+    let f5Client: F5Client;
 
-    // beforeEach(function () {
-    //     mgmtClient = getManagementClientIpv6();
-    // });
-    // afterEach(function () {
-    //     if (!nock.isDone()) {
-    //         throw new Error(`Not all nock interceptors were used: ${nock.pendingMocks()}`)
-    //     }
-    //     nock.cleanAll();
-    // });
+    beforeEach(function () {
+        f5Client = getF5Client({ ipv6: true });
+    });
+    afterEach(function () {
+        if (!nock.isDone()) {
+            throw new Error(`Not all nock interceptors were used: ${nock.pendingMocks()}`)
+        }
+        nock.cleanAll();
+    });
 
     it('should make basic request', async function () {
         nock(`https://${ipv6Host}`)
             .post('/mgmt/shared/authn/login')
-            .reply(200, getFakeToken())
+            .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                return getFakeToken(reqBody.username, reqBody.loginProviderName);
+            })
             .get('/foo')
             .reply(200, { foo: 'bar' });
 
         
-        mgmtClient = getManagementClientIpv6();
-
-        const response = await mgmtClient.makeRequest('/foo');
+        const response = await f5Client.https('/foo');
         assert.deepStrictEqual(response.data, { foo: 'bar' })
-        await mgmtClient.clearToken();
+        await f5Client.clearLogin();
     });
 
     it('should make basic request - additional mgmt client params', async function () {
         nock(`https://${ipv6Host}:8443`)
             .post('/mgmt/shared/authn/login')
-            .reply(200, getFakeToken())
+            .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                return getFakeToken(reqBody.username, reqBody.loginProviderName);
+            })
+
             .get('/foo')
             .reply(200, { foo: 'bar' });
 
         // create a custom mgmtClient so we can inject/test port/provider
-        mgmtClient = new ManagementClient(
+        f5Client = new F5Client(
             ipv6Host,
             'admin',
-            'admin',
+            'pasdfqwe',
             {
                 port: 8443,
                 provider: 'tmos'
             }
         )
 
-        const response = await mgmtClient.makeRequest('/foo');
+        const response = await f5Client.https('/foo');
         assert.deepStrictEqual(response.data, { foo: 'bar' })
-        await mgmtClient.clearToken();
+        await f5Client.clearLogin();
     });
 
 
     it('extending ipv6 - discovery', async function () {
         nock(`https://${ipv6Host}:8443`)
             .post('/mgmt/shared/authn/login')
-            .reply(200, getFakeToken())
+            .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                return getFakeToken(reqBody.username, reqBody.loginProviderName);
+            })
 
             .get('/foo')
             .reply(200, { foo: 'bar' })
@@ -121,10 +129,12 @@ describe('http client tests - ipv6', function () {
             }
         )
 
-        // const x = await mgmtClient.discover();
         const resp = await dClient.https('/foo');
+
+        // like to have some feedback on this function at some point
+        // right now it just discovers information
         const disc = await dClient.discover();
-        // await dClient.getQkview();
+
         assert.deepStrictEqual(resp.data, { foo: 'bar' })
         await dClient.clearLogin();
     });

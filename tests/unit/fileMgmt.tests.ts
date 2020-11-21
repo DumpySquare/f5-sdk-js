@@ -12,22 +12,19 @@
 
 import assert from 'assert';
 import nock from 'nock';
-import { ManagementClient } from '../../src/bigip';
 import { F5Client } from '../../src/bigip/f5Client';
 import * as fs from 'fs';
 
 
-import { getManagementClientIpv6, ipv6Host } from './bigip/fixtureUtils';
-// import { requestNew } from '../../src/utils/http_new'
-// import { makeRequest } from '../../src/utils/http';
+import { getF5Client, ipv6Host } from './bigip/fixtureUtils';
 import { getFakeToken } from './bigip/fixtureUtils';
-// import localAtcMetadata from '../../src/bigip/atc_metadata.json';
 import path from 'path';
+import { AuthTokenReqBody } from '../../src/models';
 
 
 
 describe('file upload/download tests - ipv6', function () {
-    let mgmtClient: ManagementClient;
+    let f5Client: F5Client;
 
 
     const rpm = 'f5-appsvcs-templates-1.4.0-1.noarch.rpm';
@@ -35,7 +32,7 @@ describe('file upload/download tests - ipv6', function () {
     const filePath = path.join(__dirname, '..', 'artifacts', rpm)
 
     beforeEach(function () {
-        mgmtClient = getManagementClientIpv6();
+        f5Client = getF5Client({ ipv6: true });
     });
     afterEach(function () {
         if (!nock.isDone()) {
@@ -47,33 +44,39 @@ describe('file upload/download tests - ipv6', function () {
     it('download file from F5', async function () {
         nock(`https://${ipv6Host}`)
             .post('/mgmt/shared/authn/login')
-            .reply(200, getFakeToken())
-
+            .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                return getFakeToken(reqBody.username, reqBody.loginProviderName);
+            })
             .get(`/mgmt/cm/autodeploy/software-image-downloads/${rpm}`)
             .replyWithFile(200, filePath);
 
-        const resp = await mgmtClient.downloadFile(rpm, tmp);   // download file
+        const resp = await f5Client.download(rpm, tmp);     // download file
 
         assert.ok(fs.existsSync(resp.data.path))                // confirm/assert file is there
 
         fs.unlinkSync(resp.data.path);                          // remove tmp file
-        await mgmtClient.clearToken();                          // clear auth token for next test
+        await f5Client.clearLogin();                            // clear auth token for next test
     });
 
 
-    // it('upload file to ', async function () {
-    //     nock(`https://${ipv6Host}:8443`)
-    //         .post('/mgmt/shared/authn/login')
-    //         .reply(200, getFakeToken())
-    //         .get(`/mgmt/cm/autodeploy/software-image-downloads/${file}`)
-    //         .reply(200, { foo: 'bar' });
+    it('upload file to ', async function () {
+        nock(`https://${ipv6Host}`)
+            .post('/mgmt/shared/authn/login')
+            .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                return getFakeToken(reqBody.username, reqBody.loginProviderName);
+            })
+            .persist()
 
+            // so the following just tests that the url was POST'd to, not the file contents
+            //  but since the function returns the filename and file size, those should confirm
+            //  that everthing completed
+            .post(`/mgmt/shared/file-transfer/uploads/${rpm}`)
+            .reply(200, { foo: 'bar' });
 
-    //     // mgmtClient = getManagementClientIpv6();
-
-    //     const response = await mgmtClient.makeRequest('/foo');
-    //     assert.deepStrictEqual(response.data, { foo: 'bar' })
-    //     await mgmtClient.clearToken();
-    // });
+        const response = await f5Client.upload(filePath);
+        assert.deepStrictEqual(response.data.fileName, 'f5-appsvcs-templates-1.4.0-1.noarch.rpm')
+        assert.ok(response.data.bytes);  // just asserting that we got a value here, should be a number
+        await f5Client.clearLogin();
+    });
 
 });

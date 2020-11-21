@@ -11,6 +11,7 @@
 import assert from 'assert';
 import nock from 'nock';
 import { ManagementClient } from '../../../src/bigip';
+import { AuthTokenReqBody } from '../../../src/models';
 
 import { getManagementClient, defaultHost, getFakeToken } from './fixtureUtils';
 
@@ -39,7 +40,9 @@ describe('BIG-IP: Management Client', function () {
     it('should make request', async function () {
         nock(`https://${defaultHost}`)
             .post('/mgmt/shared/authn/login')
-            .reply(200, getFakeToken())
+            .reply(200, (uri, reqBody: AuthTokenReqBody) => {
+                return getFakeToken(reqBody.username, reqBody.loginProviderName);
+            })
             .get('/foo')
             .reply(200, { foo: 'bar' });
 

@@ -7,14 +7,16 @@
  */
 
 import { ManagementClient } from '../../../src/bigip';
+import { F5Client } from '../../../src/bigip/f5Client';
 import { Token } from '../../../src/models';
 
 export const defaultHost = '192.0.2.1';
 export const defaultPort = 443;
 export const defaultUser = 'admin';
-export const defaultPassword = 'admin';
+export const defaultPassword = '@utomateTheW0rld!';
 
 export const ipv6Host = '[2607:f0d0:1002:51::5]'
+
 
 export function getManagementClient(): ManagementClient {
     return new ManagementClient(
@@ -22,16 +24,55 @@ export function getManagementClient(): ManagementClient {
         defaultUser,
         defaultPassword
     );
-};
+}
 
 
-export function getManagementClientIpv6(): ManagementClient {
-    return new ManagementClient(
-        ipv6Host,
+// export function getManagementClientIpv6(): ManagementClient {
+//     return new ManagementClient(
+//         ipv6Host,
+//         defaultUser,
+//         defaultPassword
+//     );
+// }
+
+
+export function getF5Client(
+    opts?: {
+        ipv6?: boolean,
+        // port?: number,
+        // provider?: string
+    }): F5Client {
+
+    // const newOpts: {
+    //     port?: number,
+    //     provider?: string
+    // } = {};
+
+    // // build F5Client options
+    // if (opts?.port) {
+    //     newOpts.port = opts.port
+    // }
+
+    // if (opts?.provider) {
+    //     newOpts.provider = opts.provider
+    // }
+
+    return new F5Client(
+        opts?.ipv6 ? ipv6Host : defaultHost,
         defaultUser,
-        defaultPassword
+        defaultPassword, 
+        // options = newOpts ? newOpts : undefined;
     );
-};
+}
+
+// export function getF5ClientIpv6(): F5Client {
+//     return new F5Client(
+//         ipv6Host,
+//         defaultUser,
+//         defaultPassword
+//     );
+// }
+
 
 
 /**
@@ -73,14 +114,21 @@ export function getRandomUUID(length: number): string {
 
 /**
  * generates a fake auth token with random value
+ *  - passes back username/provider
  */
-export function getFakeToken(): { token: Token } {
+export function getFakeToken(
+    userName: string,
+    authProviderName: string
+): {
+    token: Token
+} {
 
     return {
         token: {
             token: getRandomUUID(8),
-            timeout: getRandomInt(300, 600)
-
+            timeout: getRandomInt(300, 600),
+            userName,
+            authProviderName
         }
     }
 }

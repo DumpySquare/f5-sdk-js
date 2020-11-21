@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Timings } from "@szmarczak/http-timer/dist/source";
 
 /**
@@ -6,6 +7,17 @@ import { Timings } from "@szmarczak/http-timer/dist/source";
 export type Token = {
     token: string;
     timeout: number;
+    userName: string;
+    authProviderName: string;
+}
+
+/**
+ * body for getting token at '/mgmt/shared/authn/login'
+ */
+export type AuthTokenReqBody = {
+    username: string,
+    password: string,
+    loginProviderName: string
 }
 
 /**
@@ -32,12 +44,12 @@ export type HttpResponse<T = any> = {
     };
 };
 
-// https://nodejs.org/docs/latest-v12.x/api/http.html#http_http_request_url_options_callback
+// // https://nodejs.org/docs/latest-v12.x/api/http.html#http_http_request_url_options_callback
 
-// outgoing headers allows numbers (as they are converted internally to strings)
-export type OutgoingHttpHeaders = {
-    [header: string]: number | string | string[] | undefined;
-}
+// // outgoing headers allows numbers (as they are converted internally to strings)
+// export type OutgoingHttpHeaders = {
+//     [header: string]: number | string | string[] | undefined ;
+// }
 
 
 
