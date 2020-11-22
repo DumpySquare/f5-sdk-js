@@ -12,7 +12,7 @@
 import * as fs from 'fs';
 
 import * as constants from '../../constants';
-import * as httpUtils from '../../utils/f5Http';
+import * as httpUtils from '../../utils/extHttp';
 import * as miscUtils from '../../utils/misc';
 
 import { ManagementClient } from '../index';

@@ -11,7 +11,7 @@
 
 'use strict';
 
-import { makeRequest } from "./utils/f5Http";
+import { makeRequest } from "./utils/f5Https";
 
 
 

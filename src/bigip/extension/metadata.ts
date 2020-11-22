@@ -8,7 +8,7 @@
 
 'use strict';
 
-import * as httpUtils from '../../utils/f5Http';
+import * as httpUtils from '../../utils/f5Https';
 
 import localExtensionMetadata from './extension_metadata.json';
 
